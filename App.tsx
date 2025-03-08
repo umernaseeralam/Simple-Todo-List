@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Todo {
   id: string;
@@ -8,9 +9,40 @@ interface Todo {
   completed: boolean;
 }
 
+const STORAGE_KEY = '@todos';
+
 export default function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [newTodo, setNewTodo] = useState('');
+
+  // Load todos from storage when app starts
+  useEffect(() => {
+    loadTodos();
+  }, []);
+
+  // Save todos to storage whenever they change
+  useEffect(() => {
+    saveTodos();
+  }, [todos]);
+
+  const loadTodos = async () => {
+    try {
+      const storedTodos = await AsyncStorage.getItem(STORAGE_KEY);
+      if (storedTodos) {
+        setTodos(JSON.parse(storedTodos));
+      }
+    } catch (error) {
+      console.error('Error loading todos:', error);
+    }
+  };
+
+  const saveTodos = async () => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+    } catch (error) {
+      console.error('Error saving todos:', error);
+    }
+  };
 
   const addTodo = () => {
     if (newTodo.trim()) {
